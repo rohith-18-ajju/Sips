@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Live market</h1>
+<form method="post" action="{{ url_for('refresh') }}" class="bar">
+  <button>Refresh market data</button>
+  <span class="note">{% if updated %}Last updated {{ updated }}.{% else %}Nothing loaded yet.{% endif %} Needs internet and can take up to a minute.</span>
+</form>
+<script>document.querySelector('.bar').addEventListener('submit', e => { const b = e.target.querySelector('button'); b.disabled = true; b.textContent = 'Fetching live data...'; });</script>
+{% if indices %}
+{% for title, items in groups %}
+<h2 class="sh">{{ title }}</h2>
+<div class="ticks">
+  {% for i in items %}
+  <button class="tick" data-i="{{ i.idx }}">
+    <span class="tn">{{ i.name }}</span>
+    <span class="tv">{{ i.latest|num }}</span>
+    <span class="{{ 'up' if i.day_change >= 0 else 'down' }}">{{ "%+.2f"|format(i.day_change) }}% today</span>
+    <span class="note">1 month {{ i.chg_1m|pct }} | 1 year {{ i.ret_1y|pct }}</span>
+  </button>
+  {% endfor %}
+</div>
+{% endfor %}
+<h3 id="ctitle" class="sh"></h3>
+<canvas id="mchart" height="200"></canvas>
+{% else %}
+<p class="panel">No live data yet. Press <strong>Refresh market data</strong> to load Indian and international indices, gold, silver, mutual funds, stocks and news.</p>
+{% endif %}
+{% if news %}
+<h2 class="sh">Market news</h2>
+<ul class="news">{% for n in news %}<li><a href="{{ n.link }}" target="_blank" rel="noopener noreferrer">{{ n.title }}</a> <span class="note">{{ n.publisher }}{% if n.date %}, {{ n.date }}{% endif %}</span></li>{% endfor %}</ul>
+{% elif indices %}<p class="note">News could not be loaded this time. Press Refresh to try again.</p>{% endif %}
+{% if assets %}
+<h2 class="sh">Mutual fund and stock watchlist</h2>
+<table>
+  <tr><th>Name</th><th>Type</th><th>Risk</th><th>1Y</th><th>3Y / yr</th><th>5Y / yr</th></tr>
+  {% for a in assets %}
+  <tr><td><a href="{{ a.link }}">{{ a.name }}</a></td><td>{{ "Stock" if a.kind == "stock" else "Mutual fund" }}</td><td>{{ a.risk }}</td>
+      <td>{{ a.r1|pct }}</td><td>{{ a.r3|pct }}</td><td>{{ a.r5|pct }}</td></tr>
+  {% endfor %}
+</table>
+{% endif %}
+{% if indices %}
+<script src="{{ url_for('static', filename='chart.umd.min.js') }}"></script>
+<script>window.Chart || document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"><\/script>')</script>
+<script>
+const data = {{ indices | tojson }};
+Chart.defaults.color = '#b9c6e0'; Chart.defaults.borderColor = '#243b63';
+let chart;
+function show(i) {
+  const d = data[i].chart;
+  document.getElementById('ctitle').textContent = data[i].name + ': last 2 years';
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById('mchart'), {type: 'line',
+    data: {labels: d.labels, datasets: [{label: data[i].name, data: d.values, borderColor: '#3986f6', pointRadius: 0, tension: .2}]},
+    options: {plugins: {legend: {display: false}}}});
+  document.querySelectorAll('.tick').forEach(t => t.classList.toggle('on', +t.dataset.i === i));
+}
+document.querySelectorAll('.tick').forEach(t => t.addEventListener('click', () => show(+t.dataset.i)));
+show(0);
+</script>
+{% endif %}
+{% endblock %}

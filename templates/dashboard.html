@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Welcome, {{ session.user }}</h1>
+<p class="lede">Plan a goal, explore real funds and stocks, and keep your drafts in one place.</p>
+<div class="cards">
+  <div class="panel"><p class="note">Saved plans</p><p class="big">{{ n }}</p><a href="{{ url_for('plans') }}">View my plans</a></div>
+  <div class="panel"><p class="note">Latest plan</p>
+    {% if last %}<p class="big sm">{{ last.goal_name }}</p><p>Rs {{ "{:,.0f}".format(last.goal_amount) }} in {{ "%g"|format(last.years) }} years, Rs {{ "{:,.0f}".format(last.monthly) }} a month</p><a href="{{ url_for('plan_edit', pid=last.id) }}">Open draft</a>
+    {% else %}<p>No plans yet.</p><a href="{{ url_for('planner') }}">Build your first plan</a>{% endif %}</div>
+  <div class="panel"><p class="note">Market data last loaded</p><p class="big sm">{{ updated or "Not loaded yet" }}</p><a href="{{ url_for('market_page') }}">Open Market</a></div>
+</div>
+{% if snap %}
+<h2 class="sh">Indian market snapshot</h2>
+<div class="ticks">{% for i in snap %}<div class="tick"><span class="tn">{{ i.name }}</span><span class="tv">{{ i.latest|num }}</span><span class="{{ 'up' if i.day_change >= 0 else 'down' }}">{{ "%+.2f"|format(i.day_change) }}% today</span></div>{% endfor %}</div>
+{% endif %}
+<h2 class="sh">Explore</h2>
+<div class="cards">
+  <a class="card2 linkcard" href="{{ url_for('planner') }}"><strong>Plan a goal</strong><p>Turn a goal into a monthly plan with fitting funds and stocks.</p></a>
+  <a class="card2 linkcard" href="{{ url_for('compare') }}"><strong>Compare</strong><p>Put two or three funds or stocks side by side.</p></a>
+  <a class="card2 linkcard" href="{{ url_for('market_page') }}"><strong>Market trends</strong><p>Indian and international indices, gold, silver and news.</p></a>
+  <a class="card2 linkcard" href="{{ url_for('glossary') }}"><strong>Financial term simplifier</strong><p>Plain-language meanings with examples.</p></a>
+  <a class="card2 linkcard" href="{{ url_for('metals') }}"><strong>Gold and silver guide</strong><p>Ways to invest, prices and risks.</p></a>
+  <a class="card2 linkcard" href="{{ url_for('plans') }}"><strong>My plans</strong><p>Edit drafts, set allocations and download PDFs.</p></a>
+</div>
+{% endblock %}

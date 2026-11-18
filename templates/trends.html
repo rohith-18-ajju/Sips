@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Market trends</h1>
+<p class="note">{{ note }}</p>
+<canvas id="trend" height="200"></canvas>
+<table>
+  <tr><th>Asset type</th><th>1 month</th><th>6 months</th><th>1 year</th></tr>
+  {% for n, m1, m6, y1 in rows %}
+  <tr><td>{{ n }}</td><td>{{ "%+.1f"|format(m1) }}%</td><td>{{ "%+.1f"|format(m6) }}%</td><td>{{ "%+.1f"|format(y1) }}%</td></tr>
+  {% endfor %}
+</table>
+<p>Notice that the equity line moves up and down more than the debt line. That extra movement is what "higher risk" looks like. Learn more in the <a href="{{ url_for('glossary') }}">glossary</a>.</p>
+<script src="{{ url_for('static', filename='chart.umd.min.js') }}"></script>
+<script>window.Chart || document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"><\/script>')</script>
+<script>
+const colors = ['#3986f6', '#e8b04a', '#8fb8ff'], series = {{ series | tojson }};
+Chart.defaults.color = '#b9c6e0'; Chart.defaults.borderColor = '#243b63';
+new Chart(document.getElementById('trend'), {
+  type: 'line',
+  data: {labels: {{ labels | tojson }},
+         datasets: Object.keys(series).map((k, i) => ({label: k, data: series[k], borderColor: colors[i], backgroundColor: colors[i], tension: .25, pointRadius: 2}))},
+  options: {scales: {y: {title: {display: true, text: 'Indexed value (start = 100)'}}}}
+});
+</script>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Money terms, in plain language</h1>
+<label>Search a term <input id="q" type="search" placeholder="Try NAV, P/E or inflation"></label>
+{% for cat, terms in groups.items() %}
+<section class="gsec"><h2 class="sh">{{ cat }}</h2>
+  <dl>{% for t, d, e in terms %}<div class="term"><dt>{{ t }}</dt><dd>{{ d }}</dd><dd class="ex">Example: {{ e }}</dd></div>{% endfor %}</dl>
+</section>
+{% endfor %}
+<p id="none" class="note" hidden>No match. Try a shorter word.</p>
+<script>
+const q = document.getElementById('q'), items = document.querySelectorAll('.term'), secs = document.querySelectorAll('.gsec'), none = document.getElementById('none');
+q.addEventListener('input', () => {
+  const v = q.value.toLowerCase().trim(); let shown = 0;
+  items.forEach(i => { const ok = i.textContent.toLowerCase().includes(v); i.hidden = !ok; if (ok) shown++; });
+  secs.forEach(s => { s.hidden = ![...s.querySelectorAll('.term')].some(t => !t.hidden); });
+  none.hidden = shown > 0;
+});
+</script>
+{% endblock %}

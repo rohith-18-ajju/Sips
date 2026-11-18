@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Plan a goal</h1>
+<p class="lede">Set a target and a budget. We map the route.</p>
+<form method="post" class="panel">
+  <h3 class="sh">Your goal</h3>
+  <div class="grid">
+    <label>Goal <input name="goal_name" placeholder="Laptop, trip, exam fees" value="{{ request.form.goal_name }}"></label>
+    <label>Goal type <select name="goal_type">{% for t in goal_types %}<option{% if request.form.goal_type == t %} selected{% endif %}>{{ t }}</option>{% endfor %}</select></label>
+    <label>Target amount (INR) <input name="goal_amount" type="number" min="1" required value="{{ request.form.goal_amount }}"></label>
+    <label>Monthly budget (INR) <input name="monthly" type="number" min="1" required value="{{ request.form.monthly }}"></label>
+    <label>Time to goal: <output id="yout">{{ request.form.years or 3 }}</output> years
+      <input name="years" id="yrs" type="range" min="0.5" max="20" step="0.5" value="{{ request.form.years or 3 }}"></label>
+    <label>Investment preference <select name="preference">{% for t in prefs %}<option{% if request.form.preference == t %} selected{% endif %}>{{ t }}</option>{% endfor %}</select></label>
+  </div>
+  <fieldset><legend>Risk comfort</legend>
+    <div class="seg">
+      {% for r in ["Low", "Moderate", "High"] %}<input type="radio" name="risk" id="r{{ loop.index }}" value="{{ r }}"{% if (request.form.risk or "Moderate") == r %} checked{% endif %}><label for="r{{ loop.index }}">{{ r }}</label>{% endfor %}
+    </div>
+  </fieldset>
+  <button>Build my plan</button>
+</form>
+<script>const y = document.getElementById('yrs'), o = document.getElementById('yout'); y.addEventListener('input', () => { o.textContent = y.value; });</script>
+
+{% if result %}
+<section class="result">
+  <h2 class="sh">Your plan: {{ result.goal_name }}</h2>
+  <p>Rs {{ "{:,.0f}".format(result.goal) }} in {{ "%g"|format(result.years) }} years at an assumed {{ "%g"|format(result.rate) }}% a year ({{ result.risk }} risk).
+     {% if result.on_track %}Your budget meets the goal.{% else %}Your budget falls short. Try a longer time or a higher monthly amount.{% endif %}</p>
+  <div class="mgrid">
+    <div class="panel ringbox"><div class="ring" style="--p: {{ result.pct|round(0)|int }}"><span>{{ result.pct|round(0)|int }}%</span><small>of goal</small></div></div>
+    <div class="m"><p>SIP needed</p><p class="v">Rs {{ "{:,.0f}".format(result.needed) }}</p><p>a month</p></div>
+    <div class="m"><p>You invest</p><p class="v">Rs {{ "{:,.0f}".format(result.invested) }}</p><p>in total</p></div>
+    <div class="m"><p>Projected</p><p class="v">Rs {{ "{:,.0f}".format(result.projected) }}</p><p>at your budget</p></div>
+  </div>
+  <table>
+    <tr><th>Assumed return</th><th>Projected value</th></tr>
+    {% for r, v in result.scenarios %}<tr><td>{{ "%g"|format(r) }}%</td><td>Rs {{ "{:,.0f}".format(v) }}</td></tr>{% endfor %}
+  </table>
+  <form method="post" action="{{ url_for('save_plan') }}" class="inline">
+    <input type="hidden" name="goal_name" value="{{ result.goal_name }}">
+    <input type="hidden" name="goal_amount" value="{{ result.goal }}">
+    <input type="hidden" name="years" value="{{ result.years }}">
+    <input type="hidden" name="monthly" value="{{ result.monthly }}">
+    <input type="hidden" name="risk" value="{{ result.risk }}">
+    <input type="hidden" name="goal_type" value="{{ result.goal_type }}">
+    <input type="hidden" name="preference" value="{{ result.preference }}">
+    <button>Save as draft</button>
+  </form>
+  <h2 class="sh">Fits your plan</h2>
+  <div class="cards">
+    {% for f in result.funds %}
+    <article class="card2{% if f.kind == 'stock' %} stock{% endif %}"><a href="{{ f.link }}"><strong>{{ f.name }}</strong></a>
+      <div><span class="tag">{{ "Stock" if f.kind == "stock" else "Mutual fund" if f.kind == "mf" else "Sample category" }}</span><span class="tag">{{ f.risk }} risk</span>{% if f.live %}<span class="tag live">Live</span>{% endif %}</div>
+      <p class="note">1Y {{ f.r1|pct }} | 3Y per year {{ f.r3|pct }}{% if f.kind == "stock" %} | Share price {{ f.latest|inr }}, about {{ (f.latest / result.monthly)|round(1) }} months of your budget{% endif %}</p></article>
+    {% else %}<p>No fund type fits this budget and time frame. Raise the monthly amount or extend the time.</p>{% endfor %}
+  </div>
+  <p class="note">Examples chosen by simple rules (your time frame, risk comfort and budget) and ranked by 3-year return. They are for learning, not advice to buy. Past returns do not guarantee future returns. Select a name to see its full performance and indicators.</p>
+</section>
+{% endif %}
+{% endblock %}

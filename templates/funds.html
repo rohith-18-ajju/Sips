@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Funds and stocks</h1>
+<p><a href="{{ url_for('compare') }}">Compare funds and stocks side by side</a></p>
+{% if live %}
+<p class="note">Live watchlist. Select a name to see performance and financial indicators.</p>
+<table>
+  <tr><th>Name</th><th>Type</th><th>Risk</th><th>1Y</th><th>3Y / yr</th><th>5Y / yr</th></tr>
+  {% for a in live %}
+  <tr><td><a href="{{ a.link }}">{{ a.name }}</a></td><td>{{ "Stock" if a.kind == "stock" else "Mutual fund" }}</td><td>{{ a.risk }}</td>
+      <td>{{ a.r1|pct }}</td><td>{{ a.r3|pct }}</td><td>{{ a.r5|pct }}</td></tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="note">No live data yet. Open the <a href="{{ url_for('market_page') }}">Market</a> page and press Refresh to load real funds and stocks.</p>
+{% endif %}
+<h3>Learning examples (sample data)</h3>
+<table>
+  <tr><th>Name</th><th>Category</th><th>Risk</th><th>Expense ratio</th><th>3Y return</th></tr>
+  {% for f in funds %}
+  <tr><td><a href="{{ url_for('fund', fid=f.id) }}">{{ f.name }}</a></td><td>{{ f.category }}</td><td>{{ f.risk }}</td>
+      <td>{{ f.expense_ratio }}%</td><td>{{ f.ret_3y }}%</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

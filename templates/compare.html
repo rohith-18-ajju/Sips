@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Compare</h1>
+<p class="lede">Pick up to three funds or stocks and see them side by side.</p>
+{% if assets %}
+<form method="get" class="panel">
+  <div class="grid">
+    {% for slot, name in (('a', 'First'), ('b', 'Second'), ('c', 'Third (optional)')) %}{% set si = loop.index0 %}
+    <label>{{ name }}<select name="{{ slot }}"><option value="">None</option>{% for x in assets %}<option value="{{ x.key }}"{% if sel[si] == x.key %} selected{% endif %}>{{ x.name }}</option>{% endfor %}</select></label>
+    {% endfor %}
+  </div>
+  <button>Compare</button>
+</form>
+{% else %}<p class="panel">No live data yet. Open the <a href="{{ url_for('market_page') }}">Market</a> page and press Refresh first.</p>{% endif %}
+{% if chosen %}
+{% set rows = [("Latest price or NAV","latest","inr"),("1 day change","chg_1d","pct"),("1 week change","chg_1w","pct"),("1 month change","chg_1m","pct"),("6 month change","chg_6m","pct"),
+  ("1 year return","ret_1y","pct"),("3 year return per year","ret_3y","pct"),("5 year return per year","ret_5y","pct"),("Volatility","volatility","pct"),("Biggest fall (3 years)","max_drawdown","pct"),
+  ("Market size","market_cap","crore"),("P/E","pe","num"),("P/B","pb","num"),("EPS","eps","inr"),("ROE","roe","pct"),("Debt to equity","debt_equity","num"),("Dividend yield","div_yield","pct"),("Beta","beta","num"),
+  ("Fund house","fund_house","text"),("Fund category","sebi_category","text")] %}
+<table>
+  <tr><th></th>{% for a in chosen %}<th><a href="{{ a.link }}">{{ a.name }}</a></th>{% endfor %}</tr>
+  <tr><td>Type</td>{% for a in chosen %}<td>{{ "Stock" if a.kind == "stock" else "Mutual fund" }}</td>{% endfor %}</tr>
+  <tr><td>Risk</td>{% for a in chosen %}<td>{{ a.risk }}</td>{% endfor %}</tr>
+  {% for label, f, kind in rows %}<tr><td>{{ label }}</td>{% for a in chosen %}{% set v = a.get(f) %}<td>{% if kind == "inr" %}{{ v|inr }}{% elif kind == "pct" %}{{ v|pct }}{% elif kind == "num" %}{{ v|num }}{% elif kind == "crore" %}{{ v|crore }}{% else %}{{ v or "n/a" }}{% endif %}</td>{% endfor %}</tr>{% endfor %}
+</table>
+{% if series %}
+<h3 class="sh">Last 12 months, each starting at 100</h3>
+<canvas id="cmp" height="190"></canvas>
+<script src="{{ url_for('static', filename='chart.umd.min.js') }}"></script>
+<script>window.Chart || document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"><\/script>')</script>
+<script>
+Chart.defaults.color = '#b9c6e0'; Chart.defaults.borderColor = '#243b63';
+const colors = ['#3986f6', '#e8b04a', '#8fb8ff'], series = {{ series | tojson }};
+new Chart(document.getElementById('cmp'), {type: 'line',
+  data: {labels: {{ labels | tojson }}, datasets: Object.keys(series).map((k, i) => ({label: k, data: series[k], borderColor: colors[i], backgroundColor: colors[i], tension: .25, pointRadius: 2}))}});
+</script>
+{% endif %}
+<p class="note">Educational comparison only. Past performance does not guarantee future returns.</p>
+{% endif %}
+{% endblock %}

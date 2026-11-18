@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ a.name }}</h1>
+<p class="note">{{ "Stock" if a.kind == "stock" else "Mutual fund" }} | {{ a.category }} | {{ a.risk }} risk | Live data as of {{ a.as_of }} (fetched {{ updated }})</p>
+<p><a href="{{ url_for('compare', a=compare_key) }}">Compare with another fund or stock</a></p>
+<canvas id="px" height="200"></canvas>
+<div class="two">
+  <div>
+    <h3>Performance</h3>
+    <table>
+      <tr><th>Measure</th><th>Value</th></tr>
+      <tr><td>{{ "Share price" if a.kind == "stock" else "Latest NAV" }}</td><td>{{ a.latest|inr }}</td></tr>
+      <tr><td>1 day change</td><td>{{ a.chg_1d|pct }}</td></tr>
+      <tr><td>1 week change</td><td>{{ a.chg_1w|pct }}</td></tr>
+      <tr><td>1 month change</td><td>{{ a.chg_1m|pct }}</td></tr>
+      <tr><td>6 month change</td><td>{{ a.chg_6m|pct }}</td></tr>
+      <tr><td>1 year return</td><td>{{ a.ret_1y|pct }}</td></tr>
+      <tr><td>3 year return per year</td><td>{{ a.ret_3y|pct }}</td></tr>
+      <tr><td>5 year return per year</td><td>{{ a.ret_5y|pct }}</td></tr>
+      <tr><td>Ups and downs (volatility)</td><td>{{ a.volatility|pct }}</td></tr>
+      <tr><td>Biggest fall in 3 years</td><td>{{ a.max_drawdown|pct }}</td></tr>
+    </table>
+  </div>
+  <div>
+    <h3>{{ "Financial indicators" if a.kind == "stock" else "Fund details" }}</h3>
+    <table>
+      <tr><th>Indicator</th><th>Value</th></tr>
+      {% if a.kind == "stock" %}
+      <tr><td>Sector</td><td>{{ a.category }}</td></tr>
+      <tr><td>Market size</td><td>{{ a.market_cap|crore }}</td></tr>
+      <tr><td>Price to earnings (P/E)</td><td>{{ a.pe|num }}</td></tr>
+      <tr><td>Price to book (P/B)</td><td>{{ a.pb|num }}</td></tr>
+      <tr><td>Earnings per share (EPS)</td><td>{{ a.eps|inr }}</td></tr>
+      <tr><td>Return on equity (ROE)</td><td>{{ a.roe|pct }}</td></tr>
+      <tr><td>Debt to equity</td><td>{{ a.debt_equity|num }}</td></tr>
+      <tr><td>Dividend yield</td><td>{{ a.div_yield|num }}%</td></tr>
+      <tr><td>Beta</td><td>{{ a.beta|num }}</td></tr>
+      <tr><td>52 week high / low</td><td>{{ a.high52|inr }} / {{ a.low52|inr }}</td></tr>
+      {% else %}
+      <tr><td>Fund house</td><td>{{ a.fund_house or "n/a" }}</td></tr>
+      <tr><td>Category</td><td>{{ a.sebi_category or a.category }}</td></tr>
+      <tr><td>Type</td><td>{{ a.scheme_type or "n/a" }}</td></tr>
+      <tr><td>Scheme code</td><td>{{ a.scheme_code }}</td></tr>
+      <tr><td>Suggested minimum time</td><td>{{ a.min_horizon }} years</td></tr>
+      {% endif %}
+    </table>
+  </div>
+</div>
+<h3>What these mean</h3>
+{% if a.kind == "stock" %}
+<p><strong>P/E</strong> is the share price divided by yearly profit per share. A high P/E means investors pay more for each rupee of profit. <strong>P/B</strong> compares the price to the company's net worth. <strong>EPS</strong> is the profit earned for each share.</p>
+<p><strong>ROE</strong> shows how well the company turns shareholders' money into profit. <strong>Debt to equity</strong> shows how much it borrows compared with its own money, and is not very meaningful for banks. <strong>Dividend yield</strong> is the yearly payout as a percentage of the price. <strong>Beta</strong> above 1 means the stock tends to move more than the market.</p>
+{% else %}
+<p><strong>NAV</strong> is the price of one fund unit. <strong>Returns per year</strong> show the steady yearly growth over that period. Direct plan growth versions are shown, which usually have lower fees than regular plans.</p>
+{% endif %}
+<p><strong>Volatility</strong> measures how much the price moves up and down in a year. <strong>Biggest fall</strong> is the largest drop from a peak in the last 3 years. Past performance does not guarantee future returns. This is an educational guide, not advice to buy or sell.</p>
+<script src="{{ url_for('static', filename='chart.umd.min.js') }}"></script>
+<script>window.Chart || document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"><\/script>')</script>
+<script>
+Chart.defaults.color = '#b9c6e0'; Chart.defaults.borderColor = '#243b63';
+new Chart(document.getElementById('px'), {type: 'line',
+  data: {labels: {{ a.chart['labels'] | tojson }}, datasets: [{label: '{{ "Share price" if a.kind == "stock" else "NAV" }} (last 5 years)', data: {{ a.chart['values'] | tojson }}, borderColor: '#3986f6', pointRadius: 0, tension: .2}]}});
+</script>
+{% endblock %}

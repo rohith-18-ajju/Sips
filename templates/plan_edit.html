@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Edit draft</h1>
+<p class="lede">At an assumed {{ "%g"|format(result.rate) }}% a year you need about Rs {{ "{:,.0f}".format(result.needed) }} a month for this goal. Your budget projects to Rs {{ "{:,.0f}".format(result.projected) }}, which is {{ result.pct|round(0)|int }}% of the goal.</p>
+<form method="post" action="{{ url_for('plan_update', pid=p.id) }}" class="panel">
+  <h3 class="sh">Plan details</h3>
+  <div class="grid">
+    <label>Goal <input name="goal_name" value="{{ p.goal_name }}"></label>
+    <label>Goal type <select name="goal_type">{% for t in goal_types %}<option{% if p.goal_type == t %} selected{% endif %}>{{ t }}</option>{% endfor %}</select></label>
+    <label>Target amount (INR) <input name="goal_amount" type="number" min="1" required value="{{ '%g'|format(p.goal_amount) }}"></label>
+    <label>Monthly budget (INR) <input name="monthly" type="number" min="1" required value="{{ '%g'|format(p.monthly) }}"></label>
+    <label>Time to goal (years) <input name="years" type="number" min="0.5" step="0.5" required value="{{ '%g'|format(p.years) }}"></label>
+    <label>Investment preference <select name="preference">{% for t in prefs %}<option{% if p.preference == t %} selected{% endif %}>{{ t }}</option>{% endfor %}</select></label>
+  </div>
+  <fieldset><legend>Risk comfort</legend>
+    <div class="seg">{% for r in ["Low", "Moderate", "High"] %}<input type="radio" name="risk" id="e{{ loop.index }}" value="{{ r }}"{% if p.risk == r %} checked{% endif %}><label for="e{{ loop.index }}">{{ r }}</label>{% endfor %}</div>
+  </fieldset>
+  <h3 class="sh">Funds and stocks in this plan</h3>
+  {% if items %}
+  <table>
+    <tr><th>Name</th><th>Type</th><th>Allocation %</th><th>Monthly amount</th><th>1Y</th><th>3Y / yr</th><th></th></tr>
+    {% for i in items %}
+    <tr><td><a href="{{ i.link }}">{{ i.name }}</a></td><td>{{ "Stock" if i.kind == "stock" else "Mutual fund" }}</td>
+        <td><input class="alloc" name="alloc_{{ i.id }}" type="number" min="0" max="100" step="0.5" value="{{ '%g'|format(i.alloc) }}" aria-label="Allocation for {{ i.name }}"></td>
+        <td>Rs {{ "{:,.0f}".format(p.monthly * i.alloc / 100) }}</td><td>{{ i.r1|pct }}</td><td>{{ i.r3|pct }}</td>
+        <td><button class="link" form="rm{{ i.id }}">Remove</button></td></tr>
+    {% endfor %}
+    <tr><td><strong>Total</strong></td><td></td><td><strong>{{ "%g"|format(total) }}%</strong></td><td><strong>Rs {{ "{:,.0f}".format(p.monthly * total / 100) }}</strong></td><td colspan="3">{% if total|round(2) != 100 %}<span class="warn">A complete plan allocates 100%.</span>{% else %}<span class="up">Fully allocated.</span>{% endif %}</td></tr>
+  </table>
+  {% else %}<p class="note">No funds or stocks yet. Add some below.</p>{% endif %}
+  <button>Save changes</button>
+  <a class="btnlink" href="{{ url_for('plan_pdf', pid=p.id) }}">Download PDF</a>
+</form>
+{% for i in items %}<form id="rm{{ i.id }}" method="post" action="{{ url_for('plan_item_remove', pid=p.id, iid=i.id) }}"></form>{% endfor %}
+<form method="post" action="{{ url_for('plan_item_add', pid=p.id) }}" class="panel addbox">
+  <h3 class="sh">Add a fund or stock</h3>
+  {% if addable %}
+  <label>Choose one <select name="asset_key">{% for a in addable %}<option value="{{ a.key }}">{{ a.name }} ({{ "Stock" if a.kind == "stock" else "Mutual fund" }})</option>{% endfor %}</select></label>
+  <button>Add to plan</button>
+  {% else %}<p class="note">Nothing left to add, or live data has not been loaded. Press Refresh on the <a href="{{ url_for('market_page') }}">Market</a> page.</p>{% endif %}
+</form>
+{% endblock %}

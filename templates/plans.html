@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>My draft plans</h1>
+{% if plans %}
+<table>
+  <tr><th>Goal</th><th>Type</th><th>Target</th><th>Years</th><th>Monthly</th><th>Risk</th><th>Items</th><th></th></tr>
+  {% for p in plans %}
+  <tr><td><a href="{{ url_for('plan_edit', pid=p.id) }}">{{ p.goal_name }}</a></td><td>{{ p.goal_type }}</td><td>Rs {{ "{:,.0f}".format(p.goal_amount) }}</td><td>{{ "%g"|format(p.years) }}</td>
+      <td>Rs {{ "{:,.0f}".format(p.monthly) }}</td><td>{{ p.risk }}</td><td>{{ p.n_items }}</td>
+      <td class="acts"><a href="{{ url_for('plan_edit', pid=p.id) }}">Edit</a> | <a href="{{ url_for('plan_pdf', pid=p.id) }}">PDF</a>
+        <form method="post" action="{{ url_for('delete_plan', pid=p.id) }}" class="inline"><button class="link">Delete</button></form></td></tr>
+  {% endfor %}
+</table>
+{% else %}<p>No drafts yet. Build a plan in the <a href="{{ url_for('planner') }}">planner</a> and save it here.</p>{% endif %}
+{% endblock %}

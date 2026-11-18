@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="gold">Gold and silver: a beginner's guide</h1>
+<p>Precious metals are often used to balance a portfolio, because they can behave differently from shares. They also pay no interest or dividends, so your gain depends only on the price rising.</p>
+<h3>Gold and silver prices</h3>
+{% if gold or silver %}
+<p class="note">Gold and silver ETF prices from the NSE are shown as a guide to price trends. They are not the same as jewellery or spot prices.</p>
+<div class="two">
+  {% for m in (gold, silver) %}{% if m %}
+  <div>
+    <div class="tick"><span class="tn">{{ m.name }}</span><span class="tv">{{ m.latest|num }}</span>
+      <span class="{{ 'up' if m.day_change >= 0 else 'down' }}">{{ "%+.2f"|format(m.day_change) }}% today</span><span class="note">1 month {{ m.chg_1m|pct }} | 1 year {{ m.ret_1y|pct }}</span></div>
+    <canvas id="mc{{ loop.index }}" height="170"></canvas>
+  </div>
+  {% endif %}{% endfor %}
+</div>
+{% else %}<p class="note">Press Refresh on the Market page to load gold and silver price trends.</p>{% endif %}
+<h3>Ways to invest</h3>
+<table>
+  <tr><th>Option</th><th>How it works</th><th>Watch out for</th></tr>
+  <tr><td>Gold ETF</td><td>Units trade on the stock exchange and track the gold price. Needs a demat account.</td><td>Small yearly fee and brokerage.</td></tr>
+  <tr><td>Gold fund of funds</td><td>A mutual fund that invests in gold ETFs. Works with a SIP and needs no demat account.</td><td>Slightly higher fees than an ETF.</td></tr>
+  <tr><td>Silver ETF</td><td>Same idea as a gold ETF, but for silver.</td><td>Silver prices swing more than gold.</td></tr>
+  <tr><td>Sovereign Gold Bond</td><td>A government security linked to the gold price that also pays fixed interest.</td><td>Long lock-in. Whether new issues are open varies, so check current availability.</td></tr>
+  <tr><td>Physical gold</td><td>Coins, bars or jewellery.</td><td>Making charges, purity checks, storage and safety.</td></tr>
+  <tr><td>Digital gold</td><td>Buying small amounts of gold online through an app.</td><td>These products are generally not regulated like mutual funds. Check the provider carefully.</td></tr>
+</table>
+<h3>Simple rules of thumb</h3>
+<p>Many planners suggest keeping gold to a small slice of your total investments, often quoted as 5 to 10 percent. Treat this as a starting point, not a rule, and decide based on your goals and risk comfort.</p>
+<p>For students, a monthly SIP into a gold fund or ETF is usually simpler and cheaper than buying jewellery as an investment.</p>
+<p class="note">Educational guide only. Check current prices and rules from official sources before investing.</p>
+<p><a href="{{ url_for('planner') }}">Build a plan</a> or read the <a href="{{ url_for('glossary') }}">glossary</a>.</p>
+{% if gold or silver %}
+<script src="{{ url_for('static', filename='chart.umd.min.js') }}"></script>
+<script>window.Chart || document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"><\/script>')</script>
+<script>
+Chart.defaults.color = '#b9c6e0'; Chart.defaults.borderColor = '#243b63';
+[{{ gold | tojson }}, {{ silver | tojson }}].forEach((m, i) => {
+  if (!m) return;
+  new Chart(document.getElementById('mc' + (i + 1)), {type: 'line',
+    data: {labels: m.chart['labels'], datasets: [{label: m.name, data: m.chart['values'], borderColor: i ? '#8fb8ff' : '#e8b04a', pointRadius: 0, tension: .2}]},
+    options: {plugins: {legend: {display: false}}}});
+});
+</script>
+{% endif %}
+{% endblock %}

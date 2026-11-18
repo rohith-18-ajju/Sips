@@ -1,0 +1,11 @@
+# local database (holds user accounts and cached market data)
+*.db
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+# editor and OS files
+.vscode/
+.DS_Store
+Thumbs.db

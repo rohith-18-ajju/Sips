@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="herologo"><img src="{{ url_for('static', filename='logo-full.png') }}" alt="SIPS - Systematic Investment Planner for Students"></div>
+<div class="landing">
+  <div class="pitch panel">
+    <h1>Plan the money for what's next</h1>
+    <p class="lede"><strong>SIPS</strong> stands for Systematic Investment Planner for Students. Turn a goal into a monthly plan, then see real funds and stocks that fit it.</p>
+    <div class="demo">
+      <div class="ring" style="--p: 84"><span>84%</span><small>of goal</small></div>
+      <p>Example: Rs 1,200 a month for 3 years at an assumed 10% a year grows to about Rs 50,600, which is 84% of a Rs 60,000 laptop fund.</p>
+    </div>
+  </div>
+  <section class="panel narrow">
+    <h2 class="sh">{{ "Create your account" if mode == "register" else "Log in" }}</h2>
+    <form method="post">
+      <label>Username <input name="username" required autocomplete="username"></label>
+      <label>Password <input name="password" type="password" required autocomplete="{{ 'new-password' if mode == 'register' else 'current-password' }}"></label>
+      <button>{{ "Create account" if mode == "register" else "Log in" }}</button>
+    </form>
+    {% if mode == "register" %}<p>Already registered? <a href="{{ url_for('login') }}">Log in</a></p>
+    {% else %}<p>New here? <a href="{{ url_for('register') }}">Create an account</a></p>{% endif %}
+  </section>
+</div>
+{% endblock %}
